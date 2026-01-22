@@ -5,7 +5,6 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace homeLibrary
-{
     public class Book
     {
         public int Id {  get; set; }

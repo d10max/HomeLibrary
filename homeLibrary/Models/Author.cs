@@ -16,7 +16,7 @@ namespace homeLibrary
         }
         public Author(string fullName)
         {
-            this.FullName = fullName;
+            FullName = fullName;
         }
     }
 }
