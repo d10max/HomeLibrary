@@ -1,4 +1,7 @@
-﻿using System;
+﻿using homeLibrary.Data;
+using homeLibrary.Helpers;
+using homeLibrary.Models;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -6,7 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
-namespace homeLibrary
+namespace homeLibrary.Services
 {
     public class LibraryManager
     {
@@ -31,7 +34,6 @@ namespace homeLibrary
 
             return author.Id;
         }
-        //1. +
         public void AddNewBook(string name, int year, int authorID)
         {
             var newBook = new Book();
@@ -92,6 +94,17 @@ namespace homeLibrary
             .ToList();
 
             return results;
+        }
+        public bool DeleteBookById(int id)
+        {
+            var book = _db.Books.Find(id);
+
+            if (book == null) return false;
+
+            _db.Books.Remove(book);
+            _db.SaveChanges();
+
+            return true;
         }
     }
 }

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace homeLibrary
+namespace homeLibrary.Helpers
 {
     public static class TextHelpers
     {

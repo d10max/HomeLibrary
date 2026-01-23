@@ -1,10 +1,12 @@
-﻿using System;
+﻿using homeLibrary.Helpers;
+using homeLibrary.Services;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace homeLibrary
+namespace homeLibrary.UI
 {
     public class ConsoleService
     {
@@ -51,6 +53,17 @@ namespace homeLibrary
             }
 
             return year;
+        }
+        private static int GetIdToDelete()
+        {
+            int id = -1;
+            while(!int.TryParse(Console.ReadLine(), out id))
+            {
+                Console.WriteLine();
+                Console.WriteLine("[ERROR] Invalid input. Please enter a ID(number) of book you want to delete (or 0 to cancel)");
+            }
+
+            return id;
         }
         private void ExitUI()
         {
@@ -182,6 +195,73 @@ namespace homeLibrary
             Console.WriteLine("Press any key to return to menu...");
             Console.ReadLine();
         }
+        private void DeleteBookUI()
+        {
+            Console.Clear();
+            Console.WriteLine();
+            Console.WriteLine("==========================\r\n        DELETE BOOK\r\n==========================");
+
+            Console.WriteLine();
+            Console.WriteLine("> Enter Title of book you want to delete: ");
+
+            string rawInput = Console.ReadLine() ?? "";
+            string input = rawInput.NormalizeTitle();
+
+            var results = _libraryManager.GetResultsOfSearch(input);
+
+            if(results.Count > 0)
+            {
+                Console.Clear();
+                Console.WriteLine();
+                Console.WriteLine($"============================================\r\n   Found multiple books matching {rawInput}:\r\n============================================");
+
+                foreach (var book in results)
+                {
+                    Console.WriteLine();
+                    Console.WriteLine($"Title: {book.Name}");
+                    Console.WriteLine($"Publication year: {book.Year}");
+                    Console.WriteLine($"Author: {_libraryManager.GetBookAuthor(book.AuthorId)}");
+                    Console.WriteLine($"ID: {book.Id}");
+                }
+
+                Console.WriteLine();
+                Console.WriteLine("> Enter Id of book you want to delete (or 0 to cancel): ");
+                int idToDelete = GetIdToDelete();
+
+                if (idToDelete == 0)
+                {
+                    return;
+                }
+                else
+                {
+                    bool isDeleted = _libraryManager.DeleteBookById(idToDelete);
+
+                    if (isDeleted)
+                    {
+                        Console.Clear();
+                        Console.WriteLine();
+                        Console.WriteLine("Your book was successfully deleted!");
+                        Console.WriteLine("Press enter to return to menu...");
+                        Console.ReadLine();
+                    }
+                    else
+                    {
+                        Console.Clear();
+                        Console.WriteLine();
+                        Console.WriteLine("Your book wasn`t deleted!");
+                        Console.WriteLine("Press enter to return to menu...");
+                        Console.ReadLine();
+                    }
+                }
+            }
+            else
+            {
+                Console.WriteLine();
+                Console.WriteLine("There is no book with this name in library :(");
+                Console.WriteLine("Press enter to return to menu...");
+                Console.ReadLine();
+            }
+        }
         public void HandleInput(int choice)
         {
             switch (choice)
@@ -205,7 +285,7 @@ namespace homeLibrary
                     //EditBookTitleUI();
                     break;
                 case 6:
-                    //DeleteBookUI();
+                    DeleteBookUI();
                     break;
                 case 7:
                     PrintAllAuthorsUI();
