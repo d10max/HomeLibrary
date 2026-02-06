@@ -20,8 +20,8 @@ namespace homeLibrary.Helpers
         }
         public static int GetLevenshteinDistance(string s1, string s2)
         {
-            if(string.IsNullOrEmpty(s1)) return string.IsNullOrEmpty(s2) ? 0 : s2.Length;
-            if(string.IsNullOrEmpty(s2)) return s1.Length;
+            if (string.IsNullOrEmpty(s1)) return string.IsNullOrEmpty(s2) ? 0 : s2.Length;
+            if (string.IsNullOrEmpty(s2)) return s1.Length;
 
             int n = s1.Length, m = s2.Length;
             int[,] d = new int[n + 1, m + 1];

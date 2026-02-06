@@ -16,7 +16,8 @@ namespace homeLibrary.Services
     {
         private readonly AppDbContext _db;
 
-        public LibraryManager(AppDbContext db) {
+        public LibraryManager(AppDbContext db)
+        {
             _db = db;
         }
         public int GetOrCreateAuthorId(string authorName)
@@ -37,7 +38,8 @@ namespace homeLibrary.Services
         {
             int authorId = GetOrCreateAuthorId(authorName);
 
-            var newBook = new Book {
+            var newBook = new Book
+            {
 
                 Name = name,
                 Year = year,

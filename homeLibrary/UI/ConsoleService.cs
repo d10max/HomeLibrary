@@ -106,7 +106,7 @@ namespace homeLibrary.UI
             Console.WriteLine();
             Console.WriteLine("> Enter Author Name: ");
             string authorName = Console.ReadLine() ?? "None";
-           
+
             _libraryManager.AddNewBook(name, year, authorName);
 
             Console.Clear();
@@ -380,7 +380,7 @@ namespace homeLibrary.UI
 
             var results = _libraryManager.GetResultsOfAuthorSearch(query);
 
-            if(results.Count <= 0)
+            if (results.Count <= 0)
             {
                 Console.WriteLine();
                 Console.WriteLine("There is no author with this name in library :(");
@@ -393,7 +393,7 @@ namespace homeLibrary.UI
             Console.WriteLine();
             Console.WriteLine($"==============================================\r\n   Found multiple Authors matching {query}:\r\n==============================================");
 
-            foreach(var author in results)
+            foreach (var author in results)
             {
                 Console.WriteLine();
                 Console.WriteLine($"Author`s name: {author.FullName}");
@@ -404,7 +404,7 @@ namespace homeLibrary.UI
             Console.WriteLine("> Enter Id of author (or 0 to cancel): ");
             int authorId = GetIdFromUser();
 
-            if(authorId == 0)
+            if (authorId == 0)
             {
                 Console.WriteLine("Press enter to return to menu...");
                 Console.ReadLine();
@@ -413,7 +413,7 @@ namespace homeLibrary.UI
 
             var findedAuthor = _libraryManager.GetAuthorById(authorId);
 
-            if(findedAuthor == null)
+            if (findedAuthor == null)
             {
                 Console.WriteLine();
                 Console.WriteLine("There is no author with this ID in library :(");
