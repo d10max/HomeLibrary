@@ -14,13 +14,15 @@ namespace homeLibrary
     {
         static void Main(string[] args)
         {
-            using(var db = new AppDbContext())
+            using (var db = new AppDbContext())
             {
-                var LibraryManager = new LibraryManager(db);
-                var ConsoleService = new ConsoleService(LibraryManager);
+                db.Database.EnsureCreated();
 
-                ConsoleService.MainMenuLogic();
+                var libraryManager = new LibraryManager(db);
+                var consoleService = new ConsoleService(libraryManager);
+
+                consoleService.MainMenuLogic();
             }
         }
     }
-} 
+}

@@ -18,10 +18,8 @@ namespace homeLibrary.Services
         public LibraryManager(AppDbContext db) {
             _db = db;
         }
-        public int GetAuthorId()
+        public int GetAuthorId(string authorName)
         {
-            string authorName = Console.ReadLine() ?? "";
-
             var author = _db.Authors.FirstOrDefault(a => a.FullName == authorName);
 
             if (author == null)
@@ -65,17 +63,7 @@ namespace homeLibrary.Services
         {
             var author = _db.Authors.FirstOrDefault(a => a.Id == id);
 
-            if (author != null)
-            {
-                return author.FullName;
-            }
-            else
-            {
-                Console.WriteLine();
-                Console.WriteLine("This book hasn't author!");
-
-                return "";
-            }
+            return (author != null) ? author.FullName : "";
         }
         public List<Book> GetResultsOfSearch(string query)
         {
@@ -95,6 +83,24 @@ namespace homeLibrary.Services
 
             return results;
         }
+        public List<Author> GetResultsOfAuthorSearch(string query)
+        {
+            var allAuthors = _db.Authors.ToList();
+            int maxMistakes = 3;
+
+            var results = allAuthors.Select(author => new
+            {
+                OriginalAuthor = author,
+                NormalizedName = author.FullName.NormalizeTitle(),
+                levenstDist = TextHelpers.GetLevenshteinDistance(author.FullName.NormalizeTitle(), query)
+            })
+            .Where(b => b.levenstDist <= maxMistakes || b.NormalizedName.Contains(query))
+            .OrderBy(b => b.levenstDist)
+            .Select(b => b.OriginalAuthor)
+            .ToList();
+
+            return results;
+        }
         public bool DeleteBookById(int id)
         {
             var book = _db.Books.Find(id);
@@ -105,6 +111,15 @@ namespace homeLibrary.Services
             _db.SaveChanges();
 
             return true;
+        }
+        public Book? FindBookById(int id)
+        {
+            var book = _db.Books.Find(id);
+            return book;
+        }
+        public void SaveChanges()
+        {
+            _db.SaveChanges();
         }
     }
 }

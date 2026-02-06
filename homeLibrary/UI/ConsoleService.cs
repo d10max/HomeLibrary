@@ -1,7 +1,9 @@
 ﻿using homeLibrary.Helpers;
+using homeLibrary.Models;
 using homeLibrary.Services;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -16,7 +18,7 @@ namespace homeLibrary.UI
         {
             _libraryManager = libraryManager;
         }
-        private static void PrintMainMenu()
+        private void PrintMainMenu()
         {
             Console.Clear();
             Console.Write("=============================================\r\n          " +
@@ -32,7 +34,7 @@ namespace homeLibrary.UI
                     "[0] Exit\r\n=============================================\r\n  " +
                     "Select an option (0-8): ");
         }
-        private static int GetUserChoice()
+        private int GetUserChoice()
         {
             int choice = -1;
             while (!int.TryParse(Console.ReadLine(), out choice) || choice < 0 || choice > 8)
@@ -43,21 +45,36 @@ namespace homeLibrary.UI
 
             return choice;
         }
-        private static int GetYear()
+        private int GetYear()
         {
             int year = -1;
-            while (!int.TryParse(Console.ReadLine(), out year) || year < 0 || year > 2026)
+            var currentYear = DateTime.Now.Year;
+            while (!int.TryParse(Console.ReadLine(), out year) || year < 0 || year > currentYear)
             {
                 Console.WriteLine();
-                Console.WriteLine("[ERROR] Invalid input. Please enter a number between 0 and 2026.");
+                Console.WriteLine($"[ERROR] Invalid input. Please enter a number between 0 and {currentYear}.");
             }
 
             return year;
         }
-        private static int GetIdToDelete()
+        private int GetYearForUpdate(int prevYear)
+        {
+            if (string.IsNullOrWhiteSpace(Console.ReadLine())) return prevYear;
+
+            int year = -1;
+            int currentYear = DateTime.Now.Year;
+            while (!int.TryParse(Console.ReadLine(), out year) || year < 0 || year > currentYear)
+            {
+                Console.WriteLine();
+                Console.WriteLine($"[ERROR] Invalid input. Please enter a number between 0 and {currentYear}.");
+            }
+
+            return year;
+        }
+        private int GetIdFromUser()
         {
             int id = -1;
-            while(!int.TryParse(Console.ReadLine(), out id))
+            while (!int.TryParse(Console.ReadLine(), out id))
             {
                 Console.WriteLine();
                 Console.WriteLine("[ERROR] Invalid input. Please enter a ID(number) of book you want to delete (or 0 to cancel)");
@@ -87,12 +104,13 @@ namespace homeLibrary.UI
 
             Console.WriteLine();
             Console.WriteLine("> Enter Author Name: ");
-            int authorId = _libraryManager.GetAuthorId();
+            string authorName = Console.ReadLine() ?? "";
+            int authorId = _libraryManager.GetAuthorId(authorName);
 
             _libraryManager.AddNewBook(name, year, authorId);
 
             Console.Clear();
-            Console.WriteLine("Your book was succesfully added to library!");
+            Console.WriteLine("Your book was successfully added to library!");
             Console.WriteLine("Press enter to return to menu...");
             Console.ReadLine();
         }
@@ -176,7 +194,7 @@ namespace homeLibrary.UI
         private void PrintAllAuthorsUI()
         {
 
-            
+
 
             Console.Clear();
             Console.WriteLine("=============================================\r\n          " +
@@ -209,7 +227,7 @@ namespace homeLibrary.UI
 
             var results = _libraryManager.GetResultsOfSearch(input);
 
-            if(results.Count > 0)
+            if (results.Count > 0)
             {
                 Console.Clear();
                 Console.WriteLine();
@@ -226,7 +244,7 @@ namespace homeLibrary.UI
 
                 Console.WriteLine();
                 Console.WriteLine("> Enter Id of book you want to delete (or 0 to cancel): ");
-                int idToDelete = GetIdToDelete();
+                int idToDelete = GetIdFromUser();
 
                 if (idToDelete == 0)
                 {
@@ -262,6 +280,155 @@ namespace homeLibrary.UI
                 Console.ReadLine();
             }
         }
+        private void EditBookInfoUI()
+        {
+            Console.Clear();
+            Console.WriteLine();
+            Console.WriteLine("==========================\r\n        EDIT BOOK INFO\r\n==========================");
+
+            Console.WriteLine();
+            Console.WriteLine("> Enter Title of book you want to edit: ");
+
+            string rawInput = Console.ReadLine() ?? "";
+            string input = rawInput.NormalizeTitle();
+
+            var results = _libraryManager.GetResultsOfSearch(input);
+
+            if (results.Count > 0)
+            {
+                Console.Clear();
+                Console.WriteLine();
+                Console.WriteLine($"============================================\r\n   Found multiple books matching {rawInput}:\r\n============================================");
+
+                foreach (var book in results)
+                {
+                    Console.WriteLine();
+                    Console.WriteLine($"Title: {book.Name}");
+                    Console.WriteLine($"Publication year: {book.Year}");
+                    Console.WriteLine($"Author: {_libraryManager.GetBookAuthor(book.AuthorId)}");
+                    Console.WriteLine($"ID: {book.Id}");
+                }
+
+                Console.WriteLine();
+                Console.WriteLine("> Enter Id of book you want to edit (or 0 to cancel): ");
+                int idToEdit = GetIdFromUser();
+
+                if (idToEdit == 0)
+                {
+                    return;
+                }
+
+                var bookToEdit = _libraryManager.FindBookById(idToEdit);
+
+                if (bookToEdit == null)
+                {
+                    Console.WriteLine();
+                    Console.WriteLine("ERROR: there is no book with this id!");
+                    return;
+                }
+
+                Console.Clear();
+                Console.WriteLine("CURRENT BOOK INFO:");
+                Console.WriteLine();
+                Console.WriteLine($"Title: {bookToEdit.Name}");
+                Console.WriteLine($"Publication year: {bookToEdit.Year}");
+                Console.WriteLine($"Author: {_libraryManager.GetBookAuthor(bookToEdit.AuthorId)}");
+                Console.WriteLine($"ID: {bookToEdit.Id}");
+
+                Console.WriteLine();
+                Console.WriteLine("> Enter new Book Title (or press ENTER to leave it without changes): ");
+                string name = Console.ReadLine() ?? "";
+                if (!string.IsNullOrWhiteSpace(name)) bookToEdit.Name = name;
+
+                Console.WriteLine();
+                Console.WriteLine("> Enter new Publication Year (or press ENTER to leave it without changes): ");
+                bookToEdit.Year = GetYearForUpdate(bookToEdit.Year);
+
+                Console.WriteLine();
+                Console.WriteLine("> Enter new Author Name (or press ENTER to leave it without changes): ");
+                string authorName = Console.ReadLine() ?? "";
+                if (!string.IsNullOrWhiteSpace(authorName)) bookToEdit.AuthorId = _libraryManager.GetAuthorId(authorName);
+
+                _libraryManager.SaveChanges();
+
+                Console.Clear();
+                Console.WriteLine();
+                Console.WriteLine("Your book was successfully edited!");
+                Console.WriteLine("\nEDITED BOOK INFO:");
+                Console.WriteLine();
+                Console.WriteLine($"Title: {bookToEdit.Name}");
+                Console.WriteLine($"Publication year: {bookToEdit.Year}");
+                Console.WriteLine($"Author: {_libraryManager.GetBookAuthor(bookToEdit.AuthorId)}");
+                Console.WriteLine($"ID: {bookToEdit.Id}");
+                Console.WriteLine("\nPress enter to return to menu...");
+                Console.ReadLine();
+
+            }
+            else
+            {
+                Console.WriteLine();
+                Console.WriteLine("There is no book with this name in library :(");
+                Console.WriteLine("Press enter to return to menu...");
+                Console.ReadLine();
+            }
+        }
+        private void PrintAllBooksOfSomeAuthorUI()
+        {
+            Console.Clear();
+            Console.WriteLine();
+            Console.WriteLine("==========================\r\n        FIND BOOKS BY AUTHOR\r\n==========================");
+
+            Console.WriteLine("\n>Enter name of author: ");
+            string query = (Console.ReadLine() ?? "").NormalizeTitle();
+
+            var results = _libraryManager.GetResultsOfAuthorSearch(query);
+
+            if(results.Count <= 0)
+            {
+                Console.WriteLine();
+                Console.WriteLine("There is no book with this name in library :(");
+                Console.WriteLine("Press enter to return to menu...");
+                Console.ReadLine();
+                return;
+            }
+
+            Console.Clear();
+            Console.WriteLine();
+            Console.WriteLine($"============================================\r\n   Found multiple books matching {query}:\r\n============================================");
+
+            foreach(var author in results)
+            {
+                Console.WriteLine();
+                Console.WriteLine($"Author`s name: {author.FullName}");
+                Console.WriteLine($"ID: {author.Id}");
+            }
+
+            Console.WriteLine();
+            Console.WriteLine("> Enter Id of author (or 0 to cancel): ");
+            int idToDelete = GetIdFromUser();
+
+            if(idToDelete == 0)
+            {
+                return;
+            }
+
+            var authorName = _libraryManager.GetBookAuthor(idToDelete);
+
+            if(authorName == "")
+            {
+                Console.WriteLine();
+                Console.WriteLine("There is no author with this ID in library :(");
+                Console.WriteLine("Press enter to return to menu...");
+                Console.ReadLine();
+                return;
+            }
+
+            Console.Clear();
+            Console.WriteLine();
+            Console.WriteLine($"==========================\r\n        BOOKS BY AUTHOR - {authorName} \r\n==========================");
+
+
+        }
         public void HandleInput(int choice)
         {
             switch (choice)
@@ -282,7 +449,7 @@ namespace homeLibrary.UI
                     FindBookUI();
                     break;
                 case 5:
-                    //EditBookTitleUI();
+                    EditBookInfoUI();
                     break;
                 case 6:
                     DeleteBookUI();
