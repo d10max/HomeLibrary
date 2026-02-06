@@ -7,6 +7,7 @@ using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static System.Reflection.Metadata.BlobBuilder;
 
 namespace homeLibrary.UI
 {
@@ -96,7 +97,7 @@ namespace homeLibrary.UI
 
             Console.WriteLine();
             Console.WriteLine("> Enter Book Title: ");
-            string name = Console.ReadLine() ?? "";
+            string name = Console.ReadLine() ?? "None";
 
             Console.WriteLine();
             Console.WriteLine("> Enter Publication Year: ");
@@ -104,10 +105,9 @@ namespace homeLibrary.UI
 
             Console.WriteLine();
             Console.WriteLine("> Enter Author Name: ");
-            string authorName = Console.ReadLine() ?? "";
-            int authorId = _libraryManager.GetAuthorId(authorName);
-
-            _libraryManager.AddNewBook(name, year, authorId);
+            string authorName = Console.ReadLine() ?? "None";
+           
+            _libraryManager.AddNewBook(name, year, authorName);
 
             Console.Clear();
             Console.WriteLine("Your book was successfully added to library!");
@@ -145,7 +145,7 @@ namespace homeLibrary.UI
                 Console.WriteLine();
                 Console.WriteLine($"Title: {book.Name}");
                 Console.WriteLine($"Publication year: {book.Year}");
-                Console.WriteLine($"Author: {_libraryManager.GetBookAuthor(book.AuthorId)}");
+                Console.WriteLine($"Author: {book.Author.FullName}");
             }
 
             Console.WriteLine("");
@@ -178,7 +178,7 @@ namespace homeLibrary.UI
                     Console.WriteLine();
                     Console.WriteLine($"Title: {book.Name}");
                     Console.WriteLine($"Publication year: {book.Year}");
-                    Console.WriteLine($"Author: {_libraryManager.GetBookAuthor(book.AuthorId)}");
+                    Console.WriteLine($"Author: {book.Author.FullName}");
                 }
             }
             else
@@ -193,9 +193,6 @@ namespace homeLibrary.UI
         }
         private void PrintAllAuthorsUI()
         {
-
-
-
             Console.Clear();
             Console.WriteLine("=============================================\r\n          " +
                     "List of all authors" + "\n=============================================");
@@ -238,7 +235,7 @@ namespace homeLibrary.UI
                     Console.WriteLine();
                     Console.WriteLine($"Title: {book.Name}");
                     Console.WriteLine($"Publication year: {book.Year}");
-                    Console.WriteLine($"Author: {_libraryManager.GetBookAuthor(book.AuthorId)}");
+                    Console.WriteLine($"Author: {book.Author.FullName}");
                     Console.WriteLine($"ID: {book.Id}");
                 }
 
@@ -305,7 +302,7 @@ namespace homeLibrary.UI
                     Console.WriteLine();
                     Console.WriteLine($"Title: {book.Name}");
                     Console.WriteLine($"Publication year: {book.Year}");
-                    Console.WriteLine($"Author: {_libraryManager.GetBookAuthor(book.AuthorId)}");
+                    Console.WriteLine($"Author: {book.Author.FullName}");
                     Console.WriteLine($"ID: {book.Id}");
                 }
 
@@ -332,7 +329,7 @@ namespace homeLibrary.UI
                 Console.WriteLine();
                 Console.WriteLine($"Title: {bookToEdit.Name}");
                 Console.WriteLine($"Publication year: {bookToEdit.Year}");
-                Console.WriteLine($"Author: {_libraryManager.GetBookAuthor(bookToEdit.AuthorId)}");
+                Console.WriteLine($"Author: {bookToEdit.Author.FullName}");
                 Console.WriteLine($"ID: {bookToEdit.Id}");
 
                 Console.WriteLine();
@@ -346,8 +343,8 @@ namespace homeLibrary.UI
 
                 Console.WriteLine();
                 Console.WriteLine("> Enter new Author Name (or press ENTER to leave it without changes): ");
-                string authorName = Console.ReadLine() ?? "";
-                if (!string.IsNullOrWhiteSpace(authorName)) bookToEdit.AuthorId = _libraryManager.GetAuthorId(authorName);
+                string authorName = Console.ReadLine() ?? "None";
+                if (!string.IsNullOrWhiteSpace(authorName)) bookToEdit.AuthorId = _libraryManager.GetOrCreateAuthorId(authorName);
 
                 _libraryManager.SaveChanges();
 
@@ -358,7 +355,7 @@ namespace homeLibrary.UI
                 Console.WriteLine();
                 Console.WriteLine($"Title: {bookToEdit.Name}");
                 Console.WriteLine($"Publication year: {bookToEdit.Year}");
-                Console.WriteLine($"Author: {_libraryManager.GetBookAuthor(bookToEdit.AuthorId)}");
+                Console.WriteLine($"Author: {bookToEdit.Author.FullName}");
                 Console.WriteLine($"ID: {bookToEdit.Id}");
                 Console.WriteLine("\nPress enter to return to menu...");
                 Console.ReadLine();
@@ -376,17 +373,17 @@ namespace homeLibrary.UI
         {
             Console.Clear();
             Console.WriteLine();
-            Console.WriteLine("==========================\r\n        FIND BOOKS BY AUTHOR\r\n==========================");
+            Console.WriteLine("==========================\r\n   FIND BOOKS BY AUTHOR\r\n==========================");
 
             Console.WriteLine("\n>Enter name of author: ");
-            string query = (Console.ReadLine() ?? "").NormalizeTitle();
+            string query = (Console.ReadLine() ?? "None").NormalizeTitle();
 
             var results = _libraryManager.GetResultsOfAuthorSearch(query);
 
             if(results.Count <= 0)
             {
                 Console.WriteLine();
-                Console.WriteLine("There is no book with this name in library :(");
+                Console.WriteLine("There is no author with this name in library :(");
                 Console.WriteLine("Press enter to return to menu...");
                 Console.ReadLine();
                 return;
@@ -394,7 +391,7 @@ namespace homeLibrary.UI
 
             Console.Clear();
             Console.WriteLine();
-            Console.WriteLine($"============================================\r\n   Found multiple books matching {query}:\r\n============================================");
+            Console.WriteLine($"==============================================\r\n   Found multiple Authors matching {query}:\r\n==============================================");
 
             foreach(var author in results)
             {
@@ -405,16 +402,18 @@ namespace homeLibrary.UI
 
             Console.WriteLine();
             Console.WriteLine("> Enter Id of author (or 0 to cancel): ");
-            int idToDelete = GetIdFromUser();
+            int authorId = GetIdFromUser();
 
-            if(idToDelete == 0)
+            if(authorId == 0)
             {
+                Console.WriteLine("Press enter to return to menu...");
+                Console.ReadLine();
                 return;
             }
 
-            var authorName = _libraryManager.GetBookAuthor(idToDelete);
+            var findedAuthor = _libraryManager.GetAuthorById(authorId);
 
-            if(authorName == "")
+            if(findedAuthor == null)
             {
                 Console.WriteLine();
                 Console.WriteLine("There is no author with this ID in library :(");
@@ -425,9 +424,20 @@ namespace homeLibrary.UI
 
             Console.Clear();
             Console.WriteLine();
-            Console.WriteLine($"==========================\r\n        BOOKS BY AUTHOR - {authorName} \r\n==========================");
+            Console.WriteLine($"=================================\r\n   BOOKS BY AUTHOR - {findedAuthor.FullName} \r\n=================================");
 
+            var books = findedAuthor.Books;
+            foreach (var book in books)
+            {
+                Console.WriteLine();
+                Console.WriteLine($"Title: {book.Name}");
+                Console.WriteLine($"Publication year: {book.Year}");
+                Console.WriteLine($"Id: {book.Id}");
+            }
 
+            Console.WriteLine();
+            Console.WriteLine("Press enter to return to menu...");
+            Console.ReadLine();
         }
         public void HandleInput(int choice)
         {
@@ -458,7 +468,7 @@ namespace homeLibrary.UI
                     PrintAllAuthorsUI();
                     break;
                 case 8:
-                    //PrintAllBooksOfSomeAuthorUI();
+                    PrintAllBooksOfSomeAuthorUI();
                     break;
             }
         }

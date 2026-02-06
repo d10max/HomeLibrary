@@ -18,6 +18,6 @@ namespace homeLibrary.Models
         {
             FullName = fullName;
         }
-        public virtual List<Book> Books { get; set; }
+        public virtual List<Book> Books { get; set; } = new();
     }
 }

@@ -1,6 +1,7 @@
 ﻿using homeLibrary.Data;
 using homeLibrary.Helpers;
 using homeLibrary.Models;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -18,7 +19,7 @@ namespace homeLibrary.Services
         public LibraryManager(AppDbContext db) {
             _db = db;
         }
-        public int GetAuthorId(string authorName)
+        public int GetOrCreateAuthorId(string authorName)
         {
             var author = _db.Authors.FirstOrDefault(a => a.FullName == authorName);
 
@@ -32,13 +33,16 @@ namespace homeLibrary.Services
 
             return author.Id;
         }
-        public void AddNewBook(string name, int year, int authorID)
+        public void AddNewBook(string name, int year, string authorName)
         {
-            var newBook = new Book();
-            newBook.Name = name;
-            newBook.Year = year;
-            newBook.AuthorId = authorID;
+            int authorId = GetOrCreateAuthorId(authorName);
 
+            var newBook = new Book {
+
+                Name = name,
+                Year = year,
+                AuthorId = authorId
+            };
             _db.Books.Add(newBook);
             _db.SaveChanges();
         }
@@ -59,11 +63,11 @@ namespace homeLibrary.Services
             var authors = _db.Authors.ToList();
             return authors;
         }
-        public string GetBookAuthor(int id)
+        public Author GetAuthorById(int id)
         {
-            var author = _db.Authors.FirstOrDefault(a => a.Id == id);
+            var author = _db.Authors.Include(a => a.Books).FirstOrDefault(a => a.Id == id);
 
-            return (author != null) ? author.FullName : "";
+            return author;
         }
         public List<Book> GetResultsOfSearch(string query)
         {
