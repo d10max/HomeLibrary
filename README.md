@@ -1,6 +1,7 @@
 Library Management System (Console)
 
 Технологічний стек
+
 Мова: C# (.NET 8.0)
 ORM: Entity Framework Core
 База даних: SQLite
